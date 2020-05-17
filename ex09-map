@@ -1,0 +1,360 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h> 
+#include<stack>
+#include<queue>
+
+//操作返回代码   
+#define OK 1    
+#define ERROR 0
+#define OVERFLOW -1 
+typedef int Status;
+
+/********************************图的存储结构定义***********************/ 
+#define MaxVerNum 30  //最大顶点数量 
+#define INF 9999      //无穷大 
+           
+typedef char VexType;  //顶点数据类型 
+typedef int ArcType;      //边的权值类型 
+ 
+typedef  struct 
+{ 
+    VexType  vexs[MaxVerNum];  //顶点表      
+    ArcType  arcs[MaxVerNum][MaxVerNum];   //邻接矩阵 
+    int vernum,arcnum;          //点数 边数                  
+}AMGragh;        
+
+typedef  struct ArcNode 
+{          
+      int adjvex;   //邻接顶点的位置         
+      ArcType  Info;  //边的权值       
+      struct ArcNode * next;   //下一条边的指针 
+}EdgeNode;
+        
+typedef struct VNode 
+{               				
+      VexType  data;         //顶点信息 
+      ArcNode *firstarc;     //指向第一条依附顶点的边的指针 
+}VNode;
+       
+typedef  struct 
+{  
+      VNode  vertices[MaxVerNum];   
+      int vernum,arcnum;       //图的当前顶点数和边数          
+}ALGraph;
+
+int visited[MaxVerNum];   //顶点访问标记 
+
+/*建立图G的邻接矩阵  */
+Status CreateAMGraph(AMGragh *G) 
+{   
+	int i,j,k;			//工具人 
+	int x,y;			//矩阵坐标 
+	int w;
+	char v1,v2,message;
+	printf("请输入矩阵的顶点数,边数：");
+	scanf("%d %d",&(G->vernum),&(G->arcnum));
+	
+	printf("\n请输入矩阵的顶点信息：\n");
+	for(i=0;i<G->vernum;i++){
+		printf("V%d:",i);
+		getchar();
+		scanf("%c",&message);
+		G->vexs[i]=message;
+		printf("\n");
+	}
+	
+	for(i=0;i<G->vernum;++i)
+		for(j=0;j<G->vernum;++j)
+			G->arcs[i][j]=INF;	//初始化 
+	printf("\n请输入一条边依附的顶点以及权值，分别为：\n头 尾 权\n");
+	for(k=0;k<G->arcnum;++k){
+		
+		getchar();
+		scanf("%c %c %d",&v1,&v2,&w);
+		for(i=0;i<G->vernum;i++){
+			
+			if(G->vexs[i]==v1)
+				x=i;
+			if(G->vexs[i]==v2)
+				y=i;
+		}
+		
+		G->arcs[x][y]=w;
+	}
+	return OK;
+}
+
+/* 根据图的邻接矩阵建立图的邻接表 */
+Status CreateALGraph(AMGragh AMG,ALGraph *ALG)
+{    
+	int i,j,k;		//工具人 
+	int x,y;
+	int flag=0;
+	
+	ALG->arcnum=AMG.arcnum;		//边数 
+	ALG->vernum=AMG.vernum;		//顶点数 
+	
+	for(i=0;i<ALG->vernum;++i){
+		
+		ALG->vertices[i].data=AMG.vexs[i];
+		ALG->vertices[i].firstarc=NULL;
+		
+	}
+	
+	for(i=0;i<ALG->vernum;++i){
+
+		for(j=0;j<ALG->vernum;++j){
+			
+			if(AMG.arcs[i][j]!=INF){	//找边 
+			
+				x=i;
+				y=j;
+				printf("\n找到头尾为%c，%c的边\n",AMG.vexs[x],AMG.vexs[y]);
+
+				ArcNode *p1=new ArcNode;
+				p1->adjvex=y;
+				p1->Info=AMG.arcs[x][y];
+				p1->next=ALG->vertices[x].firstarc;
+				ALG->vertices[x].firstarc=p1;
+				ALG->vertices[x].data=AMG.vexs[x];
+	
+			}
+		}	
+		
+	
+	}
+	return OK;
+}
+
+//打印图(邻接矩阵) 
+void printGragh(AMGragh G)
+{
+	printf("\n图G的邻接矩阵\n");
+	printf("顶点：\n\t");
+	for(int i=0;i<G.vernum;i++)
+	{
+		printf("%c\t",G.vexs[i]);
+	}
+	
+	printf("\n邻接矩阵：\n\t");
+	for(int i=0;i<G.vernum;i++)
+	{
+		printf("%c\t",G.vexs[i]);
+	}
+	printf("\n");
+	for(int i=0;i<G.vernum;i++)	
+	{
+		printf("%c\t",G.vexs[i]);
+		for(int j=0;j<G.vernum;j++)
+		{
+			printf("%d\t",G.arcs[i][j]);
+		}
+		printf("\n");		
+	}
+}
+
+//打印图(邻接表) 
+void printALGragh(ALGraph G)
+{
+	printf("\n图G的邻接表\n"); 
+	
+	for(int i=0;i<G.vernum;i++)
+	{
+		printf("%c:",G.vertices[i].data);
+				
+		ArcNode* arc=G.vertices[i].firstarc;
+		while(arc)
+		{
+			printf("-->");
+			printf("%d:%d   ",arc->adjvex,arc->Info);
+			arc=arc->next;
+		}
+		printf("%\n");
+	}
+	printf("\n");
+}
+
+
+
+/**********************DFS*********************/
+//从顶点v开始图(邻接矩阵)的深度遍历 
+void DFS_AMG(AMGragh G,int v,bool *visited)
+{
+	int i,j,k;		//工具人 
+	
+	printf("DFS_AMG_访问节点%d\n",v); 
+	visited[v]=true;
+	
+	for(j=0;j<G.vernum;j++){
+		if(G.arcs[v][j]!=INF && visited[j]==false)
+			DFS_AMG(G,j,visited);
+	}
+		
+}
+
+//图的(邻接矩阵)的深度遍历 
+void DFSTranverse_AMG(AMGragh G)
+{
+	int v;
+	bool visited[G.vernum];
+	
+	printf("DFS_AMG请输入顶点v :");
+	scanf("%d",&v);
+	
+	DFS_AMG(G,v,visited);
+	
+	printf("\n\n");
+}
+
+//从顶点v开始图(邻接表)的深度遍历
+void DFS_ALG(ALGraph G,int v,bool *visited,ArcNode *p1)
+{
+	int i,j,k;		//工具人 
+	
+	printf("DFS_ALG_访问节点%d\n",v); 
+		visited[v]=true;
+	p1=G.vertices[v].firstarc;
+	while(p1!=NULL){
+		j=p1->adjvex;
+		if(visited[j]==false)
+			DFS_ALG(G,j,visited,p1);
+	
+		p1=p1->next;
+	} 
+	
+}
+
+//图(邻接表)的深度遍历
+void DFSTranverse_ALG(ALGraph G)
+{
+	int v;
+	bool visited[G.vernum];
+	
+	printf("DFS_ALG请输入顶点v :");
+	scanf("%d",&v);
+	
+	ArcNode *p1=new ArcNode;
+
+	
+	DFS_ALG(G,v,visited,p1);
+	
+	printf("\n\n");
+}
+
+/**************************BFS****************************/
+
+//从顶点v开始图(邻接矩阵)的广度遍历 
+void BFS_AMG(AMGragh G,int v)
+{
+	int i,j,k;		//工具人 
+	std::queue<int> p;	
+	bool visited[G.vernum];
+
+	p.push(v);
+	 
+	while(!p.empty()){
+		k=p.front();
+		printf("BFS_AMG_访问节点%d\n",k); 
+		p.pop();
+		
+		for(i=0;i<G.vernum;++i){	
+			if(G.arcs[i][k]!=INF||G.arcs[k][i]!=INF)
+				if(visited[i]==false){	
+					visited[i]=true;
+					
+					p.push(i);
+				}			
+		}
+		
+	}
+		
+}
+
+//图(邻接矩阵)的广度遍历
+void BFSTranverse_AMG(AMGragh G)
+{
+	int v;
+	
+	printf("BFS_AMG_请输入顶点v :");
+	scanf("%d",&v);
+	
+	BFS_AMG(G,v);
+	printf("\n\n");
+}
+
+//从顶点v开始图(邻接表)的广度遍历 
+void BFS_ALG(ALGraph G,int v)
+{
+	int i,j,k;		//工具人 
+	std::queue<int> p;	
+	bool visited[G.vernum];
+	
+	ArcNode *p1=new ArcNode;
+	ArcNode *p2=new ArcNode;
+	p1=G.vertices[v].firstarc;
+
+	
+	p.push(v);
+	
+	while(!p.empty()){
+		
+		k=p.front();
+		printf("BFS_ALG_访问节点%d\n",k); 
+		p.pop();
+		while(p1!=NULL){
+			k=p1->adjvex;
+			if(visited[k]==false){
+			visited[k]=true;
+			p.push(k);
+			}
+			p1=p1->next;
+			
+			}
+		p2=G.vertices[k].firstarc;
+		while(p2!=NULL){
+			
+			j=p2->adjvex;
+			if(visited[j]==false){
+			visited[j]=true;
+			p.push(j);
+			}
+			p2=p2->next;
+		}	
+		}
+		
+}
+
+//图(邻接表)的广度遍历 
+void BFSTranverse_ALG(ALGraph G)
+{
+	int v;
+	
+	printf("BFS_ALG_请输入顶点v :");
+	scanf("%d",&v);
+	
+	BFS_ALG(G,v);
+	printf("\n\n");
+}
+
+/****main函数*************/ 
+int main()
+{
+	//创建图（邻接矩阵） 
+	AMGragh amG;
+	CreateAMGraph(&amG);
+	printGragh(amG);
+	
+	//创建图（邻接表） 
+	ALGraph alG;
+	CreateALGraph(amG,&alG);	
+	printALGragh(alG);
+	
+	//DFS遍历
+	DFSTranverse_AMG(amG);	
+	DFSTranverse_ALG(alG);
+	
+	//BFS遍历	
+	BFSTranverse_AMG(amG);
+	BFSTranverse_ALG(alG);
+}
