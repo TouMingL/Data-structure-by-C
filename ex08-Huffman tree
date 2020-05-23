@@ -1,0 +1,399 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<queue>
+#include<stack>
+
+#define MAXTEXTLENGTH 2000
+#define MAXCHARCOUNT 256
+#define MAXCODEBIT 20 
+
+/**************************类型定义********************************/ 
+//字符权重结构体 
+typedef struct
+{
+	char ch;
+	int freq;	
+}CW;
+
+//Huffman树的存储结构 
+typedef struct
+{
+	char ch;       //字符（非叶结点为'+'） 
+	int weight;    //权重       
+	int parent;    //双亲    
+	int lchild;    //左孩子 
+	int rchild;    //右孩子 
+}HTNode, *HuffmanTree;
+
+//优先队列（堆）的元素类型 
+typedef struct
+{
+	int i; //存放位置 
+	int w; //权重 
+}ElemType;
+
+//编码结果 
+typedef struct
+{
+	char ch;
+	char *bit;
+	int freq;
+}HCNode, *HuffmanCode;
+
+/**************************Huffman编码********************************/ //构造'比较函数' 
+struct cmp  
+{
+	bool operator()(const ElemType& a, const ElemType& b)
+	{
+		return a.w > b.w;
+	}
+};
+
+void countW(CW cw[],int *n)
+{
+	char ch;
+	int count[MAXCHARCOUNT]; 
+	FILE *fp=fopen("test.txt","r");
+	if(!fp)
+	{
+		printf("can't open file\n");
+		return;
+	}
+	
+	for(int index = 0; index < MAXCHARCOUNT; index++){//初始化，避免出现越界数据 
+		count[index]=0;
+		cw[index].freq=0;
+	}
+	 		
+	while(!feof(fp))
+	{
+		fscanf(fp,"%c",&ch);
+		//以下开始统计字符出现的次数，放入cw 
+		if(ch>=' '&&ch<='~'){
+		count[ch-' ']++;
+		(*n)++;
+		}
+	}
+	for(int index = 0; index < MAXCHARCOUNT; index++){
+    		cw[index].ch=index+32;
+    		cw[index].freq=count[index];
+	}
+    	
+	printf("\n");
+	fclose(fp);
+}
+
+void printW(CW cw[],int n)
+{
+	int t=0;
+	printf("以下为该文件内各字符的权重表\n");
+	for(int i=0;i<MAXCHARCOUNT;i++)
+	{	
+		if(cw[i].freq!=0){
+			printf("%3c: %d",cw[i].ch,cw[i].freq);
+			t++;
+			if(t%5==0)
+				printf("\n");
+		}	
+	}
+	printf("\n——————————————————————————————\n"); 
+}
+
+//功能：根据输入的叶结点的权重，构建Haffman树
+//参数：cw:字符权重数组，n:权重个数（cw元素个数）, HT：建立的Haffman树 
+void CreateHuffmanTree(CW cw[],int n,HuffmanTree HT)
+{
+	std::priority_queue<ElemType,std::vector<ElemType>,cmp > pq;//优先队列 ，向量 ，小根堆 
+	int i, j; 	//每次循环所用存储结构的初始值 	
+	ElemType s,x[MAXCHARCOUNT];		//临时存储结构 
+	
+	//入队
+	for( i=0; i<n; i++ )
+	{		
+		x[i].i=i;
+		x[i].w=cw[i].freq;
+		pq.push(x[i]);
+	}
+	
+	//用优先队列中按顺序存入HT，并在相应位置(i)进行HT内部成员初始化
+	for(i=0;i<2*n-1;i++)
+	{ 
+		if( !pq.empty() )
+		{
+			s=pq.top();	
+		
+			HT[i].ch=cw[s.i].ch;
+			HT[i].weight=s.w;	
+				pq.pop();
+		}
+		else
+			HT[i].ch='+';  // 作业要求，'+'代表新生成结点 
+			
+		HT[i].parent=-1;
+		HT[i].lchild=-1;
+		HT[i].rchild=-1;		
+	}
+		
+	int x1,x2,y1,y2;  //中间变量，负责判断子树大小 
+	for( i=0; i<n-1; i++)
+	{
+		y1=y2=MAXTEXTLENGTH;
+		x1=x2=0;
+		for( j=0; j<n+i; j++ )
+		{
+			if( HT[j].weight<y1 && HT[j].parent==-1 )
+			{
+				y2=y1;
+				x2=x1;
+				y1=HT[j].weight;
+				x1=j;
+			}
+			else if( HT[j].weight<y2 && HT[j].parent==-1 )
+			{
+				y2=HT[j].weight;
+				x2=j;
+			}
+		}
+		HT[x1].parent=n+i;
+		HT[x2].parent=n+i;
+		HT[n+i].weight=HT[x1].weight+HT[x2].weight;
+		HT[n+i].lchild=x1;
+		HT[n+i].rchild=x2;
+	}
+	
+	printf("各结点的值如下：(依次为weight,lchild,rchild)\n");
+	for( int i=0; i<2*n-1; i++ )
+	{
+		printf("%c: weight：%d lchild：%d rchild：%d\t",HT[i].ch,HT[i].weight,HT[i].lchild,HT[i].rchild);
+		if( (i+1)%3==0 )
+			printf("\n");
+	}
+	
+	//优先队列的使用方法
+	//	pq.push(x);
+	//	if(!pq.empty())
+	//	{		
+	//		x=pq.top()
+	//		pq.pop(); 
+	//	}
+}
+
+//功能：对HT树的叶结点进行编码 
+//参数：HT:输入二叉树，n：叶结点个数，HC：编码结果 
+void CreateHuffmanCode(HuffmanTree HT,int n,HuffmanCode HC)
+{
+	std::stack<char> p;		//存储编码栈 
+	char O='0',X='1';   //字符编码 
+	
+	//利用栈的特点进行编码 ,while循环前为子节点编码，循环开始即为新生成双亲结点编码 
+	for(int i=0,j=0,k; i<n;i++)
+	{
+		k=0;
+		HC[i].ch=HT[i].ch;
+		j=i;
+		
+		if(HT[HT[j].parent].lchild==j)
+			p.push(O);
+		
+		else if(HT[HT[j].parent].rchild==j)	
+			p.push(X);	
+				
+		while( HT[j].parent!=-1 )
+		{
+			j=HT[j].parent;
+			
+			if( HT[HT[j].parent].lchild==j )
+				p.push(O);
+
+			else if( HT[HT[j].parent].rchild==j )
+				p.push(X);
+
+		}
+		
+		HC[i].freq=0;     //统计编码数以便打印 
+		while( !p.empty() )
+		{
+			HC[i].bit[k]=p.top();			
+			HC[i].freq++;
+				p.pop();
+			k++;
+		}
+	}	
+}
+
+//功能：输出编码 
+void printHuffmanCode(HuffmanCode HC,int n)
+{
+	printf("\n\n各字符编码如下所示：\n");
+	for(int i=0;i<n;i++)
+	{
+		if(HC[i].ch=='\n')
+		{ 
+			printf("%d\n：",HC[i].freq);
+			for(int j=0;j<HC[i].freq;j++)
+			{
+				printf("%c",HC[i].bit[j]);			
+			}
+			printf("\n");
+			continue;
+		}
+		
+		printf("%c：",HC[i].ch);
+		for( int j=0; j<HC[i].freq; j++ )
+		{
+			printf("%c",HC[i].bit[j]);			
+		}
+		printf("\n");		
+	}
+}
+
+/**************************文本编码解码函数********************************/
+void encode(HuffmanCode HC)
+{
+	char ch;
+	char encode[MAXTEXTLENGTH*MAXCODEBIT];
+	int n=0; //已编码文本长度 
+	int HuffStr[MAXTEXTLENGTH];
+	
+	FILE *fp=fopen("test.txt","r");
+	if(!fp)
+	{
+		printf("can't open file\n");
+		return;
+	}
+	
+	int cnt=0;	
+	while(!feof(fp))
+	{
+		fscanf(fp,"%c",&ch);
+		cnt=0;
+		while( HC[cnt].ch!=ch )
+			cnt++;	
+				  
+	  	for( int i=0; i<HC[cnt].freq; i++ )
+	  	{
+	  		encode[n]=HC[cnt].bit[i];
+	  		n++;  		
+	  	}	
+		
+		encode[n]=' ';
+		n++;
+		//对字符ch进行编码，将编码结果放入encode中
+		//注意在encode最后加'\0' 		  
+	}
+	fclose(fp);
+	
+	encode[n]='\0';
+	n++;
+	
+	printf("\n编码结果 ：");
+	printf("\n%s",encode); //输出结果
+	//写入文件 
+	FILE *fp2=fopen("encode.txt","w");
+	if(!fp2)
+	{
+		printf("can't write file\n");
+		return;
+	}
+	fprintf(fp2,"%s",encode);
+	fclose(fp2);	
+}
+
+void decode(HuffmanTree HT)
+{
+	//找huffman树的根节点 
+	int r=0;
+	while( HT[r].parent != -1 )
+		r=HT[r].parent;
+	
+	char ch;
+	char decode[MAXTEXTLENGTH];
+	FILE *fp=fopen("encode.txt","r");
+	if(!fp)
+	{
+		printf("can't open file\n");
+		return;
+	}
+	
+	int p=r,n=0;
+	while(!feof(fp))
+	{		
+		fscanf(fp,"%c",&ch);
+		printf("%c",ch);
+		
+		//延伸至树根底部寻找左右孩子,'0'和'1'表明左和右 
+		if( ch == '0' ) 
+		{
+			if ( HT[HT[p].lchild].ch != '+' )
+			{
+				p=HT[p].lchild;
+				decode[n]=HT[p].ch;
+				p=r;
+				n++;
+			}
+			else
+			{
+				p=HT[p].lchild;
+			} 
+		} 
+		
+		if( ch == '1' )
+		{
+			if( HT[HT[p].rchild].ch != '+' )
+			{
+				p=HT[p].rchild;
+				decode[n]=HT[p].ch;
+				p=r;
+				n++;
+			}
+			else
+			{
+				p=HT[p].rchild;
+			}
+		}
+		 //开始逐bit解码，将解码结果放入decode中 
+		 //注意在decode最后加'\0' 
+		 
+	}
+	fclose(fp);
+	
+	decode[n]='\0';
+	n++;
+	
+	printf("\n\n解码结果 :");
+	printf("\n%s",decode); //输出结果
+	//写入文件 
+	FILE *fp2=fopen("decode.txt","w");
+	if(!fp2)
+	{
+		printf("can't write file\n");
+		return;
+	}
+	fprintf(fp2,"%s",decode);	
+	fclose(fp2);
+}
+
+/**************************main函数********************************/
+int main()
+{
+	CW cw[MAXCHARCOUNT];
+	int n=0;
+	countW(cw,&n);
+	printW(cw,n);
+	
+	HTNode HT[2*n-1];
+	HCNode HC[n];
+	
+	printf("\n\n");
+	CreateHuffmanTree(cw,n,HT); //建立Huffman树
+	
+	CreateHuffmanCode(HT,n,HC); //对叶结点编码
+	printHuffmanCode(HC,n);  //打印Huffman编码 
+
+	encode(HC);  //编码 
+	decode(HT);   //解码  
+	
+	printf("\n");
+	return 0;
+}
