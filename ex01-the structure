@@ -1,0 +1,249 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+#define MAXSIZE 5
+
+//Student 
+typedef struct student
+{
+	int no;
+	char name[MAXSIZE];
+	int grade;
+} Student;
+
+//print Student
+void printStu(Student *stu)
+{
+	printf("%d\t%s\t%d\n",stu->no,stu->name,stu->grade);
+}
+
+int compare(Student *stu1,Student *stu2)
+{
+	return stu1->no-stu2->no;
+}
+
+//Class 
+typedef struct classinfo
+{
+	Student* stu[MAXSIZE];
+	int n;
+}Class;
+
+//allocate a new class
+//return value：the pointer of the class 
+Class *initClass()
+{
+	//allocate the memory
+	Class *pc=(Class *)malloc(sizeof(Class));
+	if(pc)
+	{        
+		pc->n=0;
+		
+		//Initiailze all poiters of students
+		for(int i=0;i<MAXSIZE;i++)
+			pc->stu[i]=NULL;
+	}	
+	
+	return pc;
+}
+
+//print the information in the class pc  
+void printClass(Class *pc)
+{
+	printf("There are %d students in the class:\n",pc->n);
+		
+	for(int i=0;i<pc->n;i++)
+		printStu(pc->stu[i]);
+		
+	printf("\n");
+}
+
+//insert student stu into the class pc
+//return value:1 if success, 0 else 
+int inserStu(Class *pc,Student *stu)
+{
+	if(pc->n==MAXSIZE)
+		return 0; 
+	else
+	{
+		pc->stu[pc->n]=stu;
+		pc->n++;
+		return 1;
+	}
+}
+
+//searching for the student stu in the class pc
+//return value:>=0(the index of stu in pc) if succeed, -1 else
+int searchStu(Class *pc,Student *stu)
+{	
+	int i;
+	for(i=0;i<pc->n;i++){
+		if(	pc->stu[i]->no==stu->no)return i;
+		
+	}
+	return -1;
+}
+
+ 
+int deleteStu(Class *pc,Student *stu)
+{
+	int i;
+	for(i=0;i<pc->n;i++){
+		if(pc->stu[i]->no==stu->no)
+     	{
+			for(int j=i;j<pc->n-1;j++)
+    		{
+				pc->stu[j]=pc->stu[j+1];
+            }		
+			free(pc->stu[pc->n]); 
+			pc->n=pc->n-1;
+		 	return  1;}//执行删除
+		}	return -1;
+}
+
+
+//insert student into the class pc 
+//parameter pc:the pointer of class
+void Insert(Class *pc)
+{
+	int no,grade;
+	char name[MAXSIZE];
+	
+	//enter the information of the student for insertion 
+	printf("Please enter the no of the student:");	
+	scanf("%d",&no);
+	printf("Please enter the name of the student:");	
+	scanf("%s",name);
+	printf("Please enter the grade of the student:");	
+	scanf("%d",&grade);
+	
+	//construct a student to insert	
+	Student *stu=(Student *)malloc(sizeof(Student));
+	stu->no=no;
+	strcpy(stu->name,name);
+	stu->grade=grade;
+	
+	//insert 
+	int ret=inserStu(pc,stu);
+	
+	//output the result of insertion 
+	if(ret)
+		printf("success\n");
+	else
+		printf("failed to insert\n");
+}
+
+void Search(Class *pc)
+{	
+	int no;	
+	//enter the no of student 
+	printf("Please enter the no of student for searching:");	
+	scanf("%d",&no);
+	
+	Student stu;
+	stu.no=no;
+	
+	int ret=searchStu(pc,&stu);
+	
+	//output the search result 
+	if(ret==-1)
+		printf("Failed\n");
+	else
+	{
+		printf("Student Information:\n");
+		printStu(pc->stu[ret]);
+	}
+
+}
+
+void Delete(Class *pc)
+{
+	int no;	
+	//enter the no of student 
+	printf("Please enter the no of student for deleting:");	
+	scanf("%d",&no);
+	
+		Student stu;
+	stu.no=no;
+	
+	int ret=deleteStu(pc,&stu);
+	
+	if(ret==-1)
+		printf("Failed\n");
+	else
+	{
+		printf("Success\n");
+	}
+	
+}
+
+//free the memory of class
+void destroy(Class **pc) 
+{	
+	if((*pc)!=NULL)
+	{
+		if((*pc)->n>0)
+		{
+			for(int i=0;i<(*pc)->n;i++)
+			{
+				free((*pc)->stu[i]);
+				(*pc)->stu[i]=NULL;
+			}
+		}
+		
+		free((*pc));
+		(*pc)=NULL;	
+	}
+}
+
+void printChoice()
+{
+	printf("\nChoices：\n");
+	printf("\t1.Print\n");
+	printf("\t2.Search\n");
+	printf("\t3.Insert\n");
+	printf("\t4.Delete\n");
+	printf("\t5.Exit\n");
+	printf("Please enter your choice:");
+}
+
+
+int main()
+{
+	Class *pc=initClass();
+	if(!pc)
+	{
+		printf("Fail to allocate memory!");
+		return 0;
+	}
+	
+	int choice=-1;	
+	while(1)
+	{
+		printChoice();
+		scanf("%d",&choice);
+		
+		switch(choice)
+		{
+			case 1:
+			       printClass(pc);
+			       break;
+            case 2:
+                   Search(pc);
+                   break;
+            case 3:
+          		   Insert(pc);
+                   break;
+            case 4:
+          		   Delete(pc);
+           		   break;
+            case 5:
+                   destroy(&pc);
+                   return 0;
+            default:
+                   printf("invalid choice");
+           		   break;
+		}
+	}
+}
