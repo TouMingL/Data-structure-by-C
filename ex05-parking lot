@@ -1,0 +1,413 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<time.h>
+#include<windows.h>    
+
+//操作返回代码   
+#define OK 1    
+#define ERROR 0
+#define OVERFLOW -1 
+typedef int Status;
+
+#define MAXSIZE 3
+
+typedef struct
+{
+	int carNo;
+	time_t enterTime;
+}ElemType;
+
+//计算停车(等待)时长
+double getDuration(ElemType *x) 
+{
+	time_t now;
+	time(&now);	
+	
+	return difftime(now,x->enterTime);
+}
+
+//打印元素 
+void visit(ElemType *x)
+{
+	printf("%d\t%s\t%.2f",x->carNo,ctime(&(x->enterTime)),getDuration(x));
+}
+
+/************************栈的定义与算法*********************************/ 
+typedef struct 
+{
+	ElemType *base;
+	ElemType *top;
+	int stacksize;
+}SqStack; 
+
+//初始化
+Status Init_SqStack(SqStack *S)
+{
+	S->base=(ElemType *)calloc(sizeof(ElemType),MAXSIZE); 
+	if(S->base)
+	{
+		S->top=S->base;
+		S->stacksize=MAXSIZE;
+		return OK;
+	}
+	else
+		return OVERFLOW;
+} 
+
+//判断栈是否为空
+int isStackEmpty(SqStack S)
+{
+	if(S.top-S.base==0)
+		return OK;
+	else
+		return ERROR;
+}
+
+//判断栈是否满 
+int isStackFull(SqStack S)
+{
+	return S.top-S.base==S.stacksize;
+}
+
+//入栈 
+Status Push(SqStack *S,ElemType e)
+{
+	if((S->top)-(S->base)==S->stacksize)//栈满 
+		return ERROR;
+	time (&e.enterTime);
+	*(S->top)=e;
+	S->top++;
+	return OK;
+ } 
+ 
+//出栈
+ Status Pop(SqStack *S,ElemType *e) //或许是我水平不够，但我觉得这次的代码有问题 
+{
+	if(S->top==S->base)//空栈 
+		return ERROR;	 
+	S->top--;
+	*e=*(S->top);
+		return OK;
+	
+}
+
+//取栈顶元素
+Status GetTop_SqStack(SqStack S,ElemType *e)
+{
+	if(S.top==S.base)
+		return ERROR;	
+	*e=*(S.top-1);
+	return OK;
+} 
+
+//销毁栈 
+void Destroy_SqStack(SqStack *S)
+{ 
+	if(S)
+	{
+		free(S->base);
+		S->base=S->top=NULL;
+		S->stacksize=0; 
+	}
+}
+
+//遍历栈(按顺序打印栈的全部元素) 
+void Traverse_SeqStack(SqStack *S)
+{
+	ElemType *p=S->base;
+	while(p!=S->top)
+	{
+		visit(p); 
+		printf("\n");
+		p++;
+	}
+}
+
+/************************队列的定义与算法*******************************/ 
+typedef struct QNode
+{
+   ElemType   data;
+   struct QNode  *next;
+}QNode, *QueuePtr;
+
+typedef struct
+{
+   QueuePtr  front;            //队头指针   
+   QueuePtr  rear;             //队尾指针
+}LinkQueue;
+
+//初始化队列 
+Status InitQueue (LinkQueue &Q)
+{
+	Q.front=Q.rear=(QueuePtr)malloc(sizeof(QNode));
+	Q.front->next=NULL;
+	return OK; 
+}
+
+//销毁队列 
+void DestroyQueue (LinkQueue &Q)
+{
+	while(Q.front){
+        Q.rear = Q.front->next;
+        free(Q.front);
+        Q.front = Q.rear;
+    }
+}
+
+//判断是否为空 
+int isQueueEmpty (LinkQueue Q)
+{
+    if(Q.front->next = NULL)
+		return OK;
+	else
+		return ERROR;                          
+}
+ 
+Status GetHead (LinkQueue Q, ElemType &e)
+{	
+	QueuePtr p;
+	if(Q.front==Q.rear)
+		return ERROR;
+		
+	p = Q.front->next;	
+    e = p->data;
+	return OK;
+}
+
+//入队 
+Status EnQueue(LinkQueue &Q,ElemType e)
+{
+	QueuePtr p=(QueuePtr)malloc(sizeof(QNode));
+	if(p)
+	{
+		p->data = e;
+    	Q.rear->next = p;
+    	Q.rear = p;
+    	p->next = NULL;
+		return OK; 
+	}
+	else
+		return OVERFLOW; 
+ 
+}
+ 
+//出队 
+Status DeQueue (LinkQueue &Q,ElemType &e)
+{
+	QueuePtr p;
+    if(isQueueEmpty(Q)==OK)
+   		return ERROR;
+   		
+   	p = Q.front->next;
+   	Q.front->next=p->next;
+	e=p->data;
+   	free(p);
+   	return OK;
+}
+
+//遍历队列 
+void Traverse_LQueue(LinkQueue *q)
+{
+	QNode *p=NULL;
+	for(p=q->front->next;p&&p!=q->rear;p=p->next)
+	{
+		visit(&(p->data));
+		printf("\n");
+	}
+	
+	if(p){
+		visit(&(q->rear->data));
+		printf("\n");
+	}
+		
+}
+
+/***********************停车场模拟*********************************/ 
+typedef struct{
+   SqStack parklot;//停车区 
+   LinkQueue pave;    //排队区 
+   SqStack temp;  //临时让路区 
+}Park;
+
+//初始化停车场 
+Status Init_Park(Park *p)
+{
+	
+	if (Init_SqStack(&p->parklot)==OK
+		&&Init_SqStack(&p->temp)==OK
+		&&InitQueue(p->pave)==OK      )
+		return OK;
+	else
+		return ERROR;
+}
+
+//销毁停车场 
+void Destroy_Park(Park *p)
+{
+	Destroy_SqStack(&p->parklot);
+	Destroy_SqStack(&p->temp);
+}
+
+//停车场是否满 
+int isFull(Park p)
+{
+	return isStackFull(p.parklot);
+}
+
+//停车 
+void Come(Park *p,ElemType car)
+{
+	if(Push(&p->parklot,car)){
+	printf("车已入库\n");
+	} 
+		
+	else{
+		printf("车库满\n");
+			//此处入队
+		EnQueue(p->pave,car); 
+		printf("车牌为%d的车车位于等候队列\n",car.carNo);
+			Traverse_LQueue(&p->pave);
+}
+}
+
+//离开 
+void Leave(Park *p,ElemType car)
+{	
+	ElemType v=car;
+	Park *s=p;
+	s->parklot.top--; 
+	if(isStackEmpty(p->parklot)==OK){
+		printf("车库空，无该车信息\n");
+		return;
+	}
+	else{
+		while(1){
+			if(car.carNo==s->parklot.top->carNo){//遍历寻找车牌  
+				Pop(&p->parklot,s->parklot.top);
+				printf("车牌为%d离开车库,停车时间为%.2lf秒\n",car.carNo,getDuration(p->parklot.top));
+				if(isQueueEmpty(p->pave)==ERROR){//判断队伍内是否有车辆 
+					if(GetHead(p->pave,v)==OK){
+						if(Push(&p->parklot,v)){
+							printf("欢迎%d的车车，加入透明的停车场\n",v); 
+							DeQueue(p->pave,v);//压入停车场后出队 
+						}	 
+					}
+				}
+				break;// 目标车离开且队伍无车，循环结束 
+			}
+			Push(&p->temp,*s->parklot.top);//此处先将其余内容压入让路栈 ，该处入栈，原内容出停车场 
+				printf("车牌为%d的车车进入临时区\n",s->parklot.top->carNo);
+			Pop(&p->parklot,s->parklot.top);//出栈提供条件改变 
+		}
+	Park *t=p;
+	t->temp.top--; 
+		while(1){
+			if(isStackEmpty(p->temp)==OK)
+				break;
+			else{
+				Push(&p->parklot,*t->temp.top);
+					printf("车牌为%d回到停车场\n",t->temp.top->carNo);
+				Pop(&p->temp,t->temp.top);
+			}
+		} 
+	}
+} 
+
+//显示停放情况 
+void showCars(Park p)
+{
+
+	printf("Cars is parking:\n");	
+	Traverse_SeqStack(&(p.parklot));
+	printf("\n");
+	
+	printf("Cars is waiting:\n");
+	Traverse_LQueue(&(p.pave));
+	printf("\n");
+	
+}
+
+/***********************功能模拟函数*********************************/
+//模拟车到达 
+void carCome(Park *p)
+{	
+	int No;	
+	char *pc;
+	ElemType car;
+	
+	time_t t;
+	time (&t);
+	pc=ctime(&t);
+	
+	printf("请输入车牌:");
+	scanf("%d",&No);
+	car.carNo=No;
+	
+	Come(p,car);
+	printf("停入时间为 : %s \n",pc);
+	
+}
+
+//模拟车离开
+void carLeave(Park *p)
+{
+	int No;	
+	char *pc;
+	ElemType car;
+	
+	time_t t;
+	time (&t);
+	pc=ctime(&t);
+	
+	printf("请输入车牌 :");
+	scanf("%d",&No);
+	car.carNo=No;
+	
+	Leave(p,car); 
+} 
+/***********************main函数*********************************/
+void Print_Option()
+{
+	printf("\nOptions：\n");
+	printf("\t1:Car come\n");
+	printf("\t2:Car leave\n");
+	printf("\t3:Show cars\n");
+	printf("\t4:Exit\n");
+}
+
+int main()
+{
+	Park p;
+	if(Init_Park(&p)==OK)
+		printf("停车场已就绪\n");
+	
+	int op=-1;
+	
+	while(1)
+	{
+		Print_Option();
+		printf("Please enter your choice :");
+		scanf("%d",&op);
+		switch(op)
+		{
+			case 1:
+				carCome(&p);
+				break;
+			case 2:
+			    carLeave(&p);
+			    break;
+			case 3:
+				showCars(p);
+				break;
+			case 4:
+				Destroy_Park(&p);
+				return 1;
+			default:
+				printf("Error\n");
+				break;
+		}
+	}
+}
+
+ 
