@@ -1,0 +1,163 @@
+#include<stdio.h>
+#include<string.h> 
+#include<stdlib.h>
+
+#define MAXSIZE 256
+
+/*******模式匹配算法*******
+**注意：C语言表示字符串的字符数组，默认从0开始***/ 
+
+//BF算法 
+int Index_BF(char *S,char *T,int pos)
+{
+	int i=pos;
+	int j=0;
+	int S_len=strlen(S),T_len=strlen(T);
+	
+	while( i<S_len && j<T_len )
+	{
+		if( S[i]==T[j] )
+		{
+			i++;
+			j++;
+		}
+		else
+		{
+			i=i-j+1;
+			j=0;
+		}
+	}
+	
+	if( j>=T_len )
+		return i-T_len;
+	else 
+		return -1;
+} 
+
+//KMP算法 
+
+int next[MAXSIZE];//next数组 
+
+int Index_KMP(char *S,char *T,int pos)
+{
+	int cnt=0;
+	int i=pos;
+	int j=0; 
+	int S_len=strlen(S),T_len=strlen(T);
+	
+	while( i<S_len && j<T_len )  
+	{    
+		if( j==0 || S[i]==T[j] )
+	  	{   
+			i++;
+			j++; 						 
+		}
+		else 
+	        j=next[j];  //保存文本字符串位置i,j后退	        
+	}
+	
+	if( j==T_len )  
+		return i-T_len;  
+	else   
+		return 0; 
+}
+
+void get_next(char *T,int next[])
+{
+	int i=0; 
+	next[0]=-1; 
+	int j=0;   
+	int T_len=strlen(T);
+	
+	while( i<T_len )
+	{
+		if( j==0 || T[i]==T[j] )
+		{	
+	        i++;j++;
+				 
+  			if( T[i]!=T[j] )	//只有两者不相等的时候，才需要更换next值
+            	next[i]=j;
+            else
+            	next[i]=next[j];
+	  	}
+  		else
+        	j=next[j];
+	} 
+
+}
+
+/*****main函数*****/
+int main()
+{
+	FILE *fp;
+	int row=0;
+	int col=0;
+	
+	int tcol=0;	//缩进计数器 
+	int cnt=0;  //防止无对应匹配内容 
+	char str[MAXSIZE]; //用于保存文件中的一行 
+	char Str[MAXSIZE]; //用于保存用户指定查找的字符串 
+	char ch[3]; //用户选择 
+		
+    if((fp=fopen("test.txt","r"))==NULL) 
+	{  
+        printf("文件无法打开\n"); 
+		return 1;  
+    } 
+    
+    printf("\tBF\tKMP\n");
+    printf("输入您想实现的算法以指定字符串的查找(请注意大写):");
+    gets(ch);
+    
+    if(strcmp(ch,"BF")!=0 && strcmp(ch,"KMP")!=0)
+    {
+		printf("\n输出错误!程序已结束\n");
+		return 1;
+    }
+    
+    printf("\n请输入要查找的字符串:");
+    gets(Str);
+  
+    printf("\n"); 
+	while(!feof(fp)) 
+	{  
+        fgets(str,MAXSIZE,fp);
+        row++; 
+		
+		if( strcmp(ch,"BF")==0 )
+		{	
+			if(str[0]=='\t')
+				tcol+=7;	
+			while( Index_BF(str,Str,col) != -1 )
+			{				
+				col=Index_BF(str,Str,col);
+				printf("%s在第%d行第%d列出现\n",Str,row,++col+tcol); //此处返回指定字符串的首字符位置 
+				cnt++;
+			}		
+		}        
+		else
+		{												
+	        if(str[0]=='\t')
+				tcol+=7;								
+			while( Index_BF(str,Str,col) != -1 )
+			{			        
+				col=Index_KMP(str,Str,col);
+    			get_next(Str,next);
+				printf("%s在第%d行第%d列出现\n",Str,row,++col+tcol);	//此处返回指定字符串的首字符位置
+				cnt++;	
+			}							
+				
+		}
+        
+		col=0;     
+		tcol=0;
+    }	
+	printf("\n");
+	
+    if( cnt==0 )
+    	printf("没有查找到相应匹配的字符串,");
+    
+	fclose(fp);
+	printf("查找结束,文件已关闭\n");   
+    
+}
