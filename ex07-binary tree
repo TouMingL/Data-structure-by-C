@@ -1,0 +1,303 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<stack>
+#include<queue>
+
+/************************二叉树的定义与建立*********************************/                  
+typedef int ElemType; 
+
+typedef struct BiTNode {
+        ElemType data;
+        struct  BiTNode *lchild, *rchild;
+}BiTNode,*BiTree;
+
+//递归创建子树 
+void createSuBiTree(BiTree T,int nodes[],int n,int i)//n=10
+{
+	if(2*i+1<n){
+		BiTree leftNode=(BiTree)malloc(sizeof(BiTNode));
+		leftNode->data=nodes[2*i+1];
+		leftNode->lchild=leftNode->rchild=NULL;
+		
+		T->lchild=leftNode;
+		
+		createSuBiTree(leftNode,nodes,n,2*i+1);
+	}
+	if(2*i+2<n){
+	 	BiTree rightNode=(BiTree)malloc(sizeof(BiTNode));
+		rightNode->data=nodes[2*i+1];
+		rightNode->lchild=rightNode->rchild=NULL;
+		
+		T->rchild=rightNode;
+		
+		createSuBiTree(rightNode,nodes,n,2*i+2);
+	}
+	i++;
+}
+
+//功能：创建二叉树
+//参数：nodes:二叉树的顺序存储结构（0~n-1） ;n:二叉树结点的数量
+//返回值：返回该二叉树的指针（根结点） 
+BiTree CreateTree(int nodes[],int n)
+{
+	BiTree root=NULL; 
+	if(n>0)
+	{
+		root=(BiTree)malloc(sizeof(BiTNode));
+		root->data=nodes[0];  //根结点存放在位置0 
+		root->lchild=root->rchild=NULL;
+		
+		createSuBiTree(root,nodes,n,0); //创建根结点的子树 
+	}
+	
+	return root; 
+}
+
+//递归销毁树(原理：先递归销毁左右子树，再销毁根结点) 
+void Destroy_Tree(BiTree *T)
+{
+if(*T) 
+	{
+		if((*T)->lchild)
+			Destroy_Tree((&(*T)->lchild));
+		if((*T)->rchild)
+			Destroy_Tree((&(*T)->rchild));
+		free(*T);
+		*T=NULL;
+	}
+}
+
+/************************Traversal*********************************/
+
+//PreOder Traversal(Recursion) 
+void  PreOrderTraverse (BiTree T)  
+{
+     if(T)  
+     {  
+	 		printf("%d ",T->data);   	 		
+            PreOrderTraverse (T->lchild ); 
+            PreOrderTraverse (T->rchild );  
+     }
+}
+
+//InOder Traversal(Recursion) 
+void InOrderTraverse (BiTree  T) 
+{
+   if (T)
+   {
+        InOrderTraverse(T->lchild);
+        printf("%d ",T->data);
+        InOrderTraverse(T->rchild);
+   }
+}
+
+//PostOder Traversal(Recursion) 
+void  PostOrderTraverse(BiTree T)
+{
+   if(T) 
+   {
+        PostOrderTraverse(T->lchild);
+        PostOrderTraverse(T->rchild);
+        printf("%d ",T->data);
+    }
+}
+
+////PreOder Traversal(Non-Recursion) 
+void  PreOrderTraverse2(BiTree T)
+{
+	std::stack<BiTree> s;
+	BiTree p=T;
+	while(p||!s.empty()){
+		if(p)
+		{
+			printf("%d ",p->data);
+			s.push(p);
+			p=p->lchild;
+		}
+		else{
+			p=s.top();
+			s.pop();
+			p=p->rchild;
+		}
+	} 
+}
+
+//IntOder Traversal(Non-Recursion)
+void  InOrderTraverse2(BiTree T)
+{
+	std::stack<BiTree> s;
+	BiTree p=T;
+	while(1){
+		while(p){
+			s.push(p);
+			p=p->lchild;
+		}
+		if(s.empty()){
+			break;
+		}
+		p=s.top();
+		printf("%d ",p->data);
+		s.pop();
+		p = p->rchild;
+   }
+}
+
+//PostOder Traversal(Non-Recursion) 
+void  PostOrderTraverse2(BiTree T)
+{
+	std::stack<BiTree> s;
+	BiTree p=T;
+	int flag[9];//记录访问次数 
+	while(1){
+		if(p!=NULL){
+			s.push(p);
+			flag[p->data]=1;
+			p=p->lchild;
+		}
+		else{
+			p=s.top();
+			if(flag[p->data]==2){
+				printf("%d ",p->data);
+				s.pop();
+				p=NULL;
+			}
+			else{
+				flag[p->data]=2;//说实话，我感觉flag[p->data]有取巧，
+				p=p->rchild;	//如果整形元素存在相同可能 出现bug 
+			}
+		}
+		if(s.empty()){
+			break;
+		}
+   }
+}
+
+
+//LevelOrder Traversal
+void  LevelOrderTraverse(BiTree T)
+{	
+	//自我批判时间 
+	// 办法虽笨，但有效（优点：思路简单，缺点：代码繁长，毫无扩展性，占用大量空间，不能适用其他情况） 
+	std::queue<BiTree> q;
+	BiTree p=T;
+	q.push(p);
+   	BiTree y=q.front();//取队头 
+   	printf("%d ",y->data);
+   	if(!q.empty())
+    	q.pop();
+//    第一层结束
+	if(p->lchild)
+		q.push(p->lchild);
+	if(p->rchild)
+		q.push(p->rchild);
+		
+	while(!q.empty()){
+		y=q.front();
+		printf("%d ",y->data);
+    	q.pop();
+	}
+//   	第二层结束 
+	if(p->lchild){
+		BiTree Cl=p->lchild;
+			if(Cl->lchild)
+				q.push(Cl->lchild);
+			if(Cl->rchild)
+				q.push(Cl->rchild);
+	}
+   		
+   	if(p->rchild){
+		BiTree Cr=p->rchild;	
+			if(Cr->lchild)
+				q.push(Cr->lchild);
+			if(Cr->rchild)
+				q.push(Cr->rchild);
+	}
+		
+	while(!q.empty()){
+		y=q.front();
+		printf("%d ",y->data);
+    	q.pop();
+	}
+//		第三层结束 
+	if(p->lchild->lchild){
+		BiTree Dll=p->lchild->lchild;
+			if(Dll->lchild)
+				q.push(Dll->lchild);
+			if(Dll->rchild)
+				q.push(Dll->rchild);
+	}
+		
+	if(p->lchild->rchild){
+		BiTree Dlr=p->lchild->rchild;			
+			if(Dlr->lchild)
+				q.push(Dlr->lchild);
+			if(Dlr->rchild)
+				q.push(Dlr->rchild);
+	}
+		
+	if(p->rchild->lchild){
+		BiTree Drl=p->rchild->lchild;
+			if(Drl->lchild)
+				q.push(Drl->lchild);
+			if(Drl->rchild)
+				q.push(Drl->rchild);
+	}
+		
+	if(p->rchild->rchild){
+		BiTree Drr=p->rchild->rchild; 
+			if(Drr->lchild)
+				q.push(Drr->lchild);
+			if(Drr->rchild)
+				q.push(Drr->rchild);
+	}
+		
+	while(!q.empty()){
+		y=q.front();
+		printf("%d ",y->data);
+    	q.pop();
+	}
+} 
+
+/************************main function*********************************/ 
+
+int main()
+{
+     /*basic opreations of stack*/	
+//    std::stack<BiTree> s;
+//    if(!s.empty())
+//    	s.pop();
+//    BiTree x=s.top();
+//    s.push(x);
+
+    /*basic opreations of queue*/	   
+//    std::queue<BiTree> q;
+//    if(!q.empty())
+//    	q.pop();
+//   	BiTree y=q.front();
+//   	q.push(y); 
+
+	int n=10;
+	int a[]={1,3,5,7,9,2,4,6,8,10};
+	BiTree T=CreateTree(a,n);
+	
+	printf("\nPreOrder Traversal with Recursion:\n");
+	PreOrderTraverse(T);
+	printf("\nPreOrder Traversal without Recursion:\n");
+	PreOrderTraverse2(T);
+	
+	printf("\n\nInOrder Traversal with Recursion:\n");
+	InOrderTraverse(T);
+	printf("\nInOrder Traversal without Recursion:\n");
+	InOrderTraverse2(T);
+	
+	printf("\n\nPostOrder Traversal with Recursion:\n");
+	PostOrderTraverse(T);
+	printf("\nPostOrder Traversal without Recursion:\n");
+	PostOrderTraverse2(T);
+	
+	printf("\n\nLevelOrder Traversal:\n");
+	LevelOrderTraverse(T);
+	
+	Destroy_Tree(&T);
+}
