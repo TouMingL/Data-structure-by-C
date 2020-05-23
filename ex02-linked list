@@ -1,0 +1,346 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+//操作返回代码    
+
+#define OK 1    
+#define ERROR 0
+#define OVERFLOW -1 
+typedef int Status;
+
+#define LEN 3
+#define MAXSIZE 10
+
+//定义ElemType 
+typedef struct elemtype
+{
+	int no;
+	char name[LEN];
+	int grade;
+	
+	bool operator==(const elemtype b) const
+	{
+		return strcmp(name,b.name)==0;
+	};
+}ElemType;
+
+//打印ElemType
+void printElemType(ElemType x)
+{
+	printf("%d\t%s\t%d\n",x.no,x.name,x.grade);
+} 
+
+//定义顺序表 
+typedef struct
+{
+	ElemType *elem;
+	int length;
+}SqList;
+
+/*******************线性表的基本操作**************************/ 
+//初始化 
+Status InitList(SqList &L)
+{
+
+	L.elem=new ElemType[MAXSIZE];
+	
+	if(!L.elem) exit(OVERFLOW);
+	      
+	L.length=0;
+		
+	return OK;	
+
+
+}
+
+//取值 
+Status GetElem(SqList L,int i,ElemType *e)
+{
+	if(i<1||i>L.length)	return ERROR;
+	
+	*e=L.elem[i-1];
+	
+	return OK;
+}
+
+//查找
+int LocateElem(SqList L,ElemType e)
+{
+	int i; 
+	for(i=0;i<=L.length;i++){
+		if(L.elem[i].no==e.no)	
+			return i;
+    }
+	return ERROR;
+} 
+
+//插入
+Status ListInsert(SqList *L,int i,ElemType e)
+{
+	if((i<1)||(i>L->length+1))	return ERROR;// i 值不合法
+	if(L->length==MAXSIZE)	return ERROR;//储存满惹 
+
+	L->elem[i]=e;
+	L->length++;
+
+	return OK; 
+}
+
+//删除
+int ListDelete(SqList *L,int i) 
+{
+
+	if((i<1)||(i>L->length))
+		return ERROR;
+	for(int j=i;j<L->length;j++)
+    		{
+				L->elem[j]=L->elem[j+1];
+            }		
+	--L->length;
+	return OK;
+}
+
+//销毁 
+void DestroyList(SqList *L)
+{
+  	if(L!=NULL)
+	{
+		if(L->length>0)
+		{	
+			for(int i=0;i<L->length;i++)
+			{	
+			free(L->elem);
+			L->elem=NULL;	
+			}
+			L->length=0;
+		}	
+	}
+
+}
+
+//求表长
+int GetLength_SqList(SqList L)
+{
+	return L.length;
+}
+
+//清空 
+void ClearList(SqList *L) 
+{
+    for(int i=0;i<=L->length-1;i++){
+		L->elem[i].grade=NULL;
+		L->elem[i].no=NULL;
+		
+		for(int x=0;x<LEN+1;x++)
+			L->elem[i].name[x]=NULL;
+ 	}
+ 	L->length=0;
+} 
+
+//判断是否为空
+int IsEmpty(SqList *L)
+{
+	if(L->length==0)
+	return OK; 
+}
+/*******************程序功能**************************/ 
+//输入学生信息 
+void Create(SqList *L)
+{
+	int no,grade,tag=0;
+	char name[LEN];
+	if(L->length==0){
+	
+	printf("Please enter the no of the student:");	
+	scanf("%d",&no);
+	printf("Please enter the name of the student:");	
+	scanf("%s",name);
+	printf("Please enter the grade of the student:");	
+	scanf("%d",&grade);
+
+	L->elem[1].no=no;
+	strcpy(L->elem[1].name,name);
+	L->elem[1].grade=grade;
+	L->length++;
+	printf("success!!!");
+}
+	else printf("Please chose insert");
+} 
+
+//清空学生信息 
+void Clear(SqList *L)
+{
+	ClearList(L);
+	printf("success!!!");
+} 
+
+//打印 
+void Print(SqList *L)
+{
+	printf("There are %d students in the class:\n",L->length);
+	
+	for(int i=1;i<=L->length;i++)
+		printElemType(L->elem[i]);
+		
+	printf("\n");
+}
+
+//查找(按位置取值或按姓名查找) 
+void Search(SqList *L)
+{	
+	int N;
+	printf("Please enter the number which you want to choice\n1.location or 2.name\n");
+	scanf("%d",&N);
+	switch(N)
+	{
+		case 1:	printf("Please enter the location\n");
+				int i;
+				scanf("%d",&i);
+				if(i<1||i>L->length){
+					printf("This is the error location");
+					break;
+				}
+				printElemType(L->elem[i]);	
+				break;
+		case 2:
+		        printf("Please enter the name of student for searching:");
+			    char name[LEN];
+			    scanf("%s",name);
+	
+	  		    elemtype e;
+			    strcpy(e.name,name);
+			    int ret=LocateElem(*L,e);
+				//output the search result 
+			    if(ret==ERROR)
+			    printf("Failed\n");
+			    else
+			    {
+			    printf("Student Information:\n");
+				printElemType(L->elem[ret]);
+				}
+			   break;
+	}
+	
+	
+	
+
+}
+
+//插入 
+void Insert(SqList *L)
+{
+	int no,grade;
+	char name[LEN];
+	int i=1+L->length;
+	if(L->length==0) printf("Maybe you should use creat\n");
+	printf("Please enter the no of the student:");	
+	scanf("%d",&no);
+	printf("Please enter the name of the student:");	
+	scanf("%s",name);
+	printf("Please enter the grade of the student:");	
+	scanf("%d",&grade);
+	
+	elemtype *e=(elemtype *)malloc(sizeof(elemtype));
+	e->no=no;
+	strcpy(e->name,name);
+	e->grade=grade;
+
+	Status ret=ListInsert(L,i,*e);
+
+	if(ret) 
+		printf("success!!!");
+	else 	
+		printf("faild!!!");
+}
+
+//删除 
+void Delete(SqList *L)
+{
+	int no,i;	
+	//enter the no of student 
+	printf("Please enter the no of student for deleting:");	
+	scanf("%d",&no);
+	
+	elemtype e;
+	e.no=no;
+	
+	for(i=0;i<L->length;i++){
+		if(L->elem[i].no==e.no) break;
+		
+		if(i==L->length || L->elem[i].no!=e.no){
+			i++;	printf("%d\n",i);
+			break;
+		}
+	}
+//	printf("%d\n",i);
+	int ret=ListDelete(L,i);
+	
+	if(ret==ERROR)
+		printf("Failed\n");
+	else
+	{
+		printf("Success\n");
+	}
+}
+
+/*******************main函数**************************/
+void printChoice()
+{
+	printf("\nChoices：\n");
+	printf("\t1.Creat\n");
+	printf("\t2.Clear\n");
+	printf("\t3.Print\n");
+	printf("\t4.Search\n");
+	printf("\t5.Insert\n");
+	printf("\t6.Delete\n");
+	printf("\t7.Exit\n");
+	printf("Please enter your choice:");
+}
+
+int main()
+{
+	SqList *L=(SqList *)malloc(sizeof(SqList));
+	int i=InitList(*L);
+	//判断空间是否申请成功 
+	if(i==ERROR){
+	 	printf("Fail to allocate memory!!!");
+	 	return 0;
+	}
+	
+		int choice=-1;
+	while(1)
+	{
+		printChoice();
+		scanf("%d",&choice);
+		
+		switch(choice)
+		{
+			case 1:
+			       Create(L);
+			       break;
+            case 2:
+                   Clear(L);
+                   break;
+            case 3:
+          		   Print(L);
+                   break;
+            case 4:
+				   Search(L);
+           		   break;
+            case 5:
+			       Insert(L);
+                   break;
+            case 6:
+				   Delete(L);
+				   break;
+			case 7:
+				   DestroyList(L);
+				   return 0;
+            default:
+                   printf("invalid choice");
+           		   break;
+		}
+	}
+		
+}
