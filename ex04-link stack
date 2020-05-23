@@ -1,0 +1,139 @@
+#include<stdio.h>
+#include<string.h> 
+#include<stdlib.h>
+
+//操作返回代码   
+#define OK 1    
+#define ERROR 0
+#define OVERFLOW -1 
+typedef int Status;
+
+#define MAXSIZE 256
+
+typedef struct
+{
+	char ch;
+	int row;
+	int col;
+}ElemType;
+
+typedef struct StackNode
+{
+	ElemType data;
+	struct StackNode *next;
+}StackNode,*LinkStack;
+
+//初始化
+Status Init_LinkStack(LinkStack *S)
+{
+	*S==NULL;
+	return OK;
+} 
+
+//判断栈是否为空
+int IsEmpty(LinkStack S)
+{
+	if(S==NULL)
+	return OK;
+}
+
+//入栈 
+Status Push(LinkStack *S,ElemType e)
+{
+	StackNode *p=(StackNode *)malloc(sizeof(StackNode));
+	if(p){
+		p->data=e;
+		
+		p->next=*S;
+		return OK;
+	}
+	else
+		return OVERFLOW;
+ } 
+ 
+//出栈
+Status Pop(LinkStack *S,ElemType *e) 
+{
+	if(S==NULL)
+		return ERROR;
+		
+	StackNode *p=*S;
+	*S=p->next;
+	*e=p->data;
+	free(p);
+	
+	return OK;
+	
+}
+
+//取栈顶元素
+Status GetTop_LinkStack(LinkStack S,ElemType *e)
+{
+	if(S==NULL)
+		return ERROR;
+	
+	*e=S->data;
+		return OK;
+} 
+
+//销毁栈 
+void Destroy_LinkStack(LinkStack *S)
+{ 
+	if(*S)
+	{
+		(*S)->next=NULL;
+		free(*S);
+	}
+}
+
+/*****main函数*****/
+int main()
+{
+	FILE *fp;
+	int row=0;
+	int col=0;
+	char str[MAXSIZE]; //用于保存文件中的一行 
+	
+    if((fp=fopen("test.txt","r"))==NULL) 
+	{  
+        printf("cannot open file\n"); 
+		return 1;  
+    } 
+    LinkStack S;
+    Init_LinkStack(&S);
+        fgets(str,MAXSIZE,fp);
+			printf("Mismatched parentheses\n");
+		Init_LinkStack(S);
+		int flag=1;
+		cin>>ch;
+		while(ch!='#'&&flag)
+		{
+			switch(ch)
+			{
+				case '[':
+				case '(':
+				case '{':
+					Push(S,ch)
+					break;
+				case ')':
+					if(!IsEmpty(S)&&GetTop_LinkStack(S) == '(' )
+						Pop(S,x);
+					else flag=0;
+					break;
+				case ']':
+					if(!IsEmpty(S)&&GetTop_LinkStack(S) == '[' )
+						Pop(S,x);
+					else flag=0;
+					break;
+				case '}':
+					if(!IsEmpty(S)&&GetTop_LinkStack(S) == '{' )
+						Pop(S,x);
+					else flag=0;
+					break;
+				
+			}
+		}
+    fclose(fp);
+    
+	return 0;
+}
