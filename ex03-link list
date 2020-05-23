@@ -1,0 +1,300 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+//操作返回代码   
+#define OK 1    
+#define ERROR 0
+#define OVERFLOW -1 
+typedef int Status;
+
+#define LEN 3
+#define MAXSIZE 10
+
+//定义ElemType 
+typedef struct elemtype
+{
+	int no;
+	char name[LEN];
+	int grade;
+	
+	bool operator!=(const elemtype b) const
+	{
+		return strcmp(name,b.name)!=0;
+	};
+}ElemType;
+
+//打印ElemType
+void printElemType(ElemType x)
+{
+	printf("%d\t%s\t%d\n",x.no,x.name,x.grade);
+} 
+
+//定义单链表 
+typedef struct LNode 
+{
+	ElemType data;
+	struct LNode *next;
+}LNode,*LinkList;
+
+/*******************线性表的基本操作**************************/ 
+//初始化 
+Status InitList(LinkList *L)
+{
+	*L=(LinkList)malloc(sizeof(LNode));
+	if(*L){
+		(*L)->next=NULL;
+		return OK;
+	} 
+	else
+		return OVERFLOW;
+}
+
+//取值 
+Status GetElem(LinkList L,int i,ElemType *e)
+{
+	LinkList p=L->next;	//第一个数据节点
+	int j=1;
+	
+	while(p&&j<i){
+		p=p->next;
+		j++;
+	}
+	 
+	if(!p||j>i)
+		return ERROR;
+	else{
+		*e=p->data;
+		return OK;
+	} 
+
+}
+
+//查找
+LNode *LocateElem(LinkList L,ElemType e)
+{
+	LinkList p=L->next; //第一个数据节点
+	while(p&&p->data!=e){
+		p=p->next;
+	
+	}	
+ 	return p;
+} 
+
+//插入
+Status ListInsert(LinkList L,int i,ElemType e)
+{
+	LinkList p=L;
+	int j=0;
+	
+	while(p&&j<i-1){
+		p=p->next;
+		j++;
+	}
+	
+	if(p){
+		LinkList q=(LinkList)malloc(sizeof(LNode));
+		if(q){
+		 
+		q->data=e;
+		
+		q->next=p->next;
+		p->next=q;
+		
+		return OK;
+		}
+		return OVERFLOW;
+	}
+	return ERROR;
+
+}
+
+//删除
+Status ListDelete(LinkList L,int i) 
+{
+	LNode *next;
+	LinkList p=L;
+	printf(	"%d\n",p->next);
+
+	int j=0;
+	
+	while(p&&j<i-1){
+		p=p->next;
+		j++;
+	}
+	if(p&&p->next){
+		LinkList q=p->next;
+		p->next=q->next;
+		free(q);
+	} 
+	else
+		return ERROR;
+}
+
+//销毁 
+void DestroyList(LinkList *L)
+{
+	LinkList p=*L,q=NULL;
+	while(p){
+		q=p;
+		p=p->next;
+		free(q);
+	}
+	*L=NULL;
+}
+
+//求表长
+int GetLength_SqList(LinkList L)
+{
+	int i=0;
+	LinkList p=L->next; //第一个数据节点
+	if(p==NULL)	
+		return 0;
+	while(p&&p->next!=NULL){
+		p=p->next;
+	i++;
+	}
+		return i+1;
+}
+
+//判断是否为空
+int IsEmpty(LinkList L)
+{
+	if(NULL!=L->next)
+		return ERROR;
+}
+/*******************程序功能**************************/ 
+//打印 
+void Print(LinkList L)
+{
+	printf("There are %d students in the class:\n",GetLength_SqList(L));
+	LinkList p=L->next; 
+	while(p){
+
+		printElemType(p->data);
+		p=p->next;
+	}
+	printf("\n");
+}
+
+//查找(按姓名查找) 
+void Search(LinkList L)
+{	
+	printf("Please enter the name of student for searching:");
+	char name[LEN];
+	scanf("%s",name);
+	
+	elemtype e;
+	strcpy(e.name,name);
+	LNode *P=LocateElem(L,e);
+		//output the search result 
+	if(P==ERROR)
+		printf("Failed\n");
+	else
+	 {
+		printf("Student Information:\n");
+		printElemType(P->data);
+	}
+
+}
+
+//插入 
+void Insert(LinkList L)
+{
+	ElemType e;
+	printf("Please enter the information of the student:\n");
+	printf("number:");
+	scanf("%d",&e.no);
+	printf("name:");
+	scanf("%s",e.name);
+	printf("performance:");
+	scanf("%d",&e.grade);
+		
+	int i;
+	printf("please enter the location for inserting: ");
+	scanf("%d",&i);
+	
+	if(ListInsert(L,i,e)==OK)
+		printf("success!!!\n");
+	else
+		printf("Faild!!!\n");
+}
+
+//删除(按姓名删除)
+void Delete(LinkList L)
+{	
+	int j=1;
+	LinkList p=L;
+	if(IsEmpty(L)==ERROR)
+		printf("Maybe you should insert something at first\n");
+
+	printf("Please enter the name of student for searching:");
+	char name[LEN];
+	scanf("%s",name);
+	int i=GetLength_SqList(L);
+	elemtype e;
+	strcpy(e.name,name);
+		//output the search result 
+	while(p&&strcmp(e.name,name)!=0){
+		p=p->next;
+		j++;
+	}
+	if(ListDelete(L,j)==ERROR)
+		printf("Failed\n");
+	else
+	 {
+		printf("Success\n");
+	}
+}
+
+/*******************main函数**************************/
+void printChoice()
+{
+	printf("\nChoices：\n");
+	printf("\t1.Print\n");
+	printf("\t2.Search\n");
+	printf("\t3.Insert\n");
+	printf("\t4.Delete\n");
+	printf("\t5.Exit\n");
+	printf("Please enter your choice:");
+}
+
+
+int main()
+{
+	LinkList L=NULL;
+	if(InitList(&L)!=OK)
+	{
+		printf("Fail to allocate memory!");
+		return 0;
+	}
+	
+	int choice=-1;	
+	while(1)
+	{
+		printChoice();
+		scanf("%d",&choice);
+		
+		switch(choice)
+		{
+            case 1:
+                   Print(L);
+                   break;
+            case 2:
+          		   Search(L);
+                   break;
+            case 3:
+          		   Insert(L);
+                   break;
+            case 4:
+          		   Delete(L);
+           		   break;
+            case 5:
+                   DestroyList(&L);
+                   return 0;
+            default:
+                   printf("invalid choice");
+           		   break;
+		}
+	}		
+}
