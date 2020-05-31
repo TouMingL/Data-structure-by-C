@@ -1,0 +1,288 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+typedef int ElemType;
+
+typedef struct BSTNode
+{
+    ElemType data;   
+    struct BSTNode *lchild;
+    struct BSTNode *rchild;
+} BSNode,*BSTree;
+
+void visit(BSTree T)
+{
+	printf("%d ",T->data);
+}
+
+/**************************Binary Search Tree***************************/ 
+void BSTree_Init(BSTree *T)
+{	
+	ElemType data;
+	printf("请输入头结点值：\t");
+	scanf("%d",&data);
+
+	BSTNode *c = new BSTNode;
+	c->data = data;
+	c->lchild = NULL;
+	c->rchild = NULL;
+	*T=c; 
+
+}
+
+//funtion:search the binary search
+//return value:the pointer of the node contains the value k, NULL when failed
+BSTree SearchBST(BSTree T, ElemType k) 
+{
+
+	while(T!=NULL){	
+		int t=T->data;
+		if (k<t){
+			printf("\n向左\n");
+			T=T->lchild;
+			if(T==NULL){
+				printf("\n>>>>>>>ERROR<<<<<<<<\n");
+			break; 
+			}
+				
+			visit(T);
+		}
+		
+		else if (k>t){
+			printf("\n向右\n");
+			T=T->rchild; 
+			if(T==NULL)
+				break; 
+			visit(T);
+		}
+			
+		else{
+			printf("\n>>>>>>>%d<<<<<<<<\n",t);	
+			break;
+		}
+	}
+
+} 
+//funtion:insert a elememt k into the binary search tree
+BSTree InsertBST(BSTree T, ElemType k) 
+{  
+	if(!T){
+		printf("creat");
+		BSTNode *T = new BSTNode;
+		
+		T->data=k;
+		T->lchild=NULL;
+		T->rchild=NULL; 
+		
+		return	T;
+	}
+	else if(k<T->data){
+		printf("left");
+		T->lchild=InsertBST(T->lchild,k);
+	}
+	else if(k>T->data){	
+		printf("right");
+		T->rchild=InsertBST(T->rchild,k);
+	}
+	
+	return	T;
+}
+
+//funtion:delete the elememt k from the binary search tree
+void DeleteBST(BSTree *T, ElemType k) 
+{  
+	BSTNode *S = new BSTNode;
+	BSTNode *P = new BSTNode;
+	
+	
+	if(T){
+		if(k == (*T)->data){
+			if(!(*T)->rchild){	//右子树为空，重接左子树
+			
+				(*T) = (*T)->lchild;
+
+			}
+			else if (!(*T)->lchild){	//同理 
+
+				(*T) = (*T)->rchild;
+				
+			}
+			else {
+				
+				P=*T;
+				S = (*T)->lchild;
+				while(S->rchild){
+					P=S;
+					S = S->rchild;
+				}
+				(*T)->data = S->data;
+				if(P != (*T))
+					P->rchild = S->lchild;
+				else
+					P->lchild = S->lchild;
+				free(S);
+			} 
+		}
+		
+		else if (k < (*T)->data)
+			return  DeleteBST(&(*T)->lchild,k);
+
+	 	else if (k > (*T)->data)
+	 		return  DeleteBST(&(*T)->rchild,k);
+	}
+}
+
+//funtion:destroy the binary search tree
+void DestroyBST(BSTree *T)
+{	
+	while((*T)->data!=NULL){
+	free(T);
+	*T=NULL;
+	BSTree_Init(&((*T)->lchild));
+	BSTree_Init(&((*T)->rchild));
+	}
+	
+}
+
+/**************************Traversal***************************/ 
+
+
+//PreOrder Traversal
+void  PreOrder(BSTree T)  
+{	
+     if (T)  
+     {  
+	 		visit(T);   	 		
+            PreOrder(T->lchild);  
+            PreOrder(T->rchild);  
+     }
+}
+
+//InOrder Traversal
+void InOrder(BSTree T) 
+{
+   if(T)
+   {
+        InOrder(T->lchild);
+        visit(T);
+        InOrder(T->rchild);
+   }
+}
+
+
+//PostOrder Traversal
+void  PostOrder(BSTree T)
+{
+   if(T) 
+   {
+        PostOrder(T->lchild);
+        PostOrder(T->rchild);
+        visit(T);
+    }
+}
+
+/**************************主函数***************************/
+void Print_Choice()
+{
+	printf("\nOption：\n");
+	printf(" \t1.Search\n");
+	printf(" \t2.Insert\n");
+	printf(" \t3.Delete\n");
+	printf(" \t4.Traverse\n");
+	printf(" \t5.Exit\n");
+	return;
+}
+
+
+void Traverse(BSTree T)
+{
+    int choice; 
+
+	printf("traversal order：\n\t1.PreOrder\n\t2.InOrder\n\t3.PostOrder\n");
+	scanf("%d",&choice);
+	
+	switch(choice)
+	{
+		case 1:
+			PreOrder(T);
+			break;
+		case 2:
+			InOrder(T);
+			break;
+		case 3:
+			PostOrder(T);
+			break;
+		default:
+			printf("Error...");
+			break; 
+			
+	}
+}
+
+/*Search*/
+void Search(BSTree T)
+{
+	ElemType k;
+	
+	printf("请输入你要查找的节点值：\t");
+	scanf("%d",&k);
+	
+	SearchBST(T,k);
+}
+
+/*Insert*/
+void Insert(BSTree *T)
+{
+	ElemType k;
+	
+	printf("请输入你要插入的节点值：\t");
+	scanf("%d",&k);
+	
+	InsertBST(*T,k);
+} 
+
+/*Delete*/
+void Delete(BSTree *T)
+{
+	ElemType k;
+	
+	printf("请输入你要删除的节点值：\t");
+	scanf("%d",&k);
+	
+	DeleteBST(T,k);
+}
+
+int main()
+{
+	BSTree T;
+	BSTree_Init(&T);
+	int ch;
+	
+	while(1)
+	{
+		Print_Choice();
+		scanf("%d",&ch);
+			    
+	    switch(ch)
+		{
+			case 1:
+				Search(T);
+				break;
+			case 2:
+				Insert(&T);
+				break;
+			case 3:
+				Delete(&T);
+				break;
+			case 4:
+				Traverse(T);
+				break;
+			case 5:
+                DestroyBST(&T);
+				return 0;
+			default:
+			   printf("输入错误!请重新输入...");
+			   break;
+		}
+	}
+}
