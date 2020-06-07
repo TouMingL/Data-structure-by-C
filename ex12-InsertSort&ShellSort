@@ -1,0 +1,124 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#define  LEN 10 
+
+/*打印数据*/ 
+void Print_Data(int a[],int n)
+{
+	printf("\n/*----------------------------*/\n");
+	
+	for(int i=0;i<n;i++)
+	{
+		printf("%5d ",a[i]);
+		
+		if(i>0&&i%10==0)
+			printf("\n");		
+	}	
+	printf("\n");	
+	printf("/*----------------------------*/\n");
+}
+
+/*产生随机数据*/ 
+void Init_Data(int a[],int n)
+{ 
+    for(int i=0;i<n;i++)
+	{
+		a[i]=rand()%(30*n);
+	} 
+	
+	Print_Data(a,n);   
+}
+
+/*直接插入排序*/
+void InsertSort(int a[],int n)
+{ 
+	int b[n];
+	int j;
+    for(int i=0;i<n;i++)
+    {
+   	    b[i]=a[i];
+    }
+    //以下对b进行排序 
+    for (int i=2;i<=n;++i){
+    	if (b[i]<b[i-1]){
+    		b[0]=b[i];
+    		b[i]=b[i-1];
+    		for (j=i-2;b[0]<b[j];--j)
+    			b[j+1]=b[j];
+    	b[j+1]=b[0];
+		}
+	}
+	for(int i=0;i<n;i++)
+    {
+   	    a[i]=b[i];
+    }
+    	Print_Data(a,LEN);
+}
+
+/*希尔排序*/
+void ShellSort(int a[],int n)
+{
+	int b[n];
+	int j,dk=5;
+    for(int i=0;i<n;i++)
+    {
+   	    b[i]=a[i];
+    }
+    //以下对b进行排序 
+    for (int i=dk+1;i<=n;++i){
+    	if (b[i]<b[i-dk]){
+    		b[0]=b[i];
+    		for (j=i-dk;j>0&&b[0]<b[j];j-=dk)
+    			b[j+dk]=b[j];
+    		b[j+dk]=b[0];
+		}
+	}
+	 for(int i=0;i<n;i++)
+    {
+   	    a[i]=b[i];
+    }
+    	Print_Data(a,LEN);
+}
+
+/*打印选项*/ 
+void Print_Choice()
+{
+	printf("\n功能：\n");
+	printf("\t1.初始化数据\n");
+	printf("\t2.直接插入排序\n");
+	printf("\t3.希尔排序\n");
+	printf("\t4.退出\n");
+	return;
+}
+
+int main()
+{
+	int a[LEN]; 
+	int ch=-1;
+	
+	while (1)
+	{
+		Print_Choice();
+		printf("请选择：");
+		scanf("%d",&ch);
+			    
+	    switch(ch)
+		{
+			case 1:
+				Init_Data(a,LEN);
+				break;
+			case 2:   
+				InsertSort(a,LEN);
+				break;		
+			case 3:   
+				ShellSort(a,LEN);
+				break;
+			case 4:
+				return 1;
+			default:
+			   printf("输入错误!请重新输入...");
+			   break;
+		}
+	}
+}
