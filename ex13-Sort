@@ -1,0 +1,340 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#define  LEN 10 
+
+/*打印数据*/ 
+void Print_Data(int a[],int n)
+{
+	printf("\n/*----------------------------*/\n");
+	
+	for(int i=0;i<n;i++)
+	{
+		printf("%5d ",a[i]);
+		
+		if(i>0&&i%10==0)
+			printf("\n");		
+	}	
+	printf("\n");	
+	printf("/*----------------------------*/\n");
+}
+
+/*产生随机数据*/ 
+void Init_Data(int a[],int n)
+{ 
+    for(int i=0;i<n;i++)
+	{
+		a[i]=rand()%(30*n);
+	} 
+	
+	printf("\n原排序如下\n");
+	
+	Print_Data(a,n);   
+}
+
+/*冒泡排序*/
+void BubbleSort(int a[])
+{
+	int m = LEN - 1;int flag = 1;
+	
+	while((m > 0)&&(flag == 1)){
+		flag = 0;//前置为0，如果此次交换未发生，则不会继续进行排序
+		for(int j=1;j<=m;j++){
+			if(a[j]>a[j+1]){
+				flag=1;
+				int t=a[j];
+				a[j]=a[j+1];
+				a[j+1]=t;
+			}	//if          这是我在书里看到的备注，发现对编译过程非常有帮助！ 
+			--m;
+		} 		//for 
+	}			//while
+	
+	printf("\n冒泡排序如下\n"); 
+}
+
+/*插入排序*/
+void InsertSort(int a[])	//这里LEN较少故使用直接插入排序 
+{
+	for(int i=2;i<=LEN;++i){
+   		if(a[i]<a[i-1]){
+   			a[0]=a[i];
+   			a[i]=a[i-1];
+   			int j=i-2;
+   			for(j = i-2;a[0] < a[j];--j){
+   				a[j+1] = a[j];
+			}
+			a[j+1]=a[0];
+		}	//if
+    }		//for 
+    
+	printf("\n插入排序如下\n");  
+}
+
+/*希尔排序*/
+void ShellSort(int a[])	//这里做了个静态步长定死的希尔排序 
+{
+	for(int dk=LEN/2;dk>=1;dk -= 2){
+		for(int i = dk + 1;i <= LEN;++i){
+			if(a[i] < a[i - dk]){
+				a[0] = a[i];
+				int j=i-dk;
+				printf("j=%d ",j); 
+				for(j = i-dk;j > 0 && a[0] < a[j];j -= dk){
+					
+					a[j+dk] = a[j];
+				}
+				a[j+dk] = a[0];
+			}	//if
+		}		//for
+	}
+	printf("\n希尔排序如下\n");  
+}
+
+/*快速排序*/
+int Partition(int a[],int low,int high){
+		a[0] = a[low];
+		int pivotkey = a[low];
+		while(low < high){
+			while(low < high && a[high] >= pivotkey)	--high;
+			a[low] = a[high];
+			while(low < high && a[low] <= pivotkey)		++low;
+			a[high] = a[low];
+		}	//while
+		a[low] = a[0];
+		
+		return low;		
+}
+
+void QSort(int a[],int low,int high){
+		if(low < high){
+			int pivotloc = Partition(a,low,high);	//pivotloc是枢轴位置 
+			QSort(a,low,pivotloc-1);
+			QSort(a,pivotloc+1,high);
+		}
+}	//QSort 
+void QuickSort(int a[])
+{	
+	QSort(a,1,LEN); 
+	printf("\n快速排序如下\n");  
+}
+
+/*选择排序*/
+void SelectSort(int a[])
+{
+	for(int i=1;i<LEN;++i){
+		int k = i;
+		for(int j = i;j<=LEN;++j){
+			if(a[j] < a[k])
+				k=j;	
+		}	//for
+		if(k!=i){
+				int t=a[i];
+				a[i]=a[k];
+				a[k]=t; 
+		} 
+	}
+	printf("\n选择排序如下\n");  
+} 
+
+/*归并排序*/
+void Merge(int a[],int start,int middle,int end)
+{
+	int i, j, k, n1, n2;
+	
+	n1 = middle - start + 1;              
+	n2 = end - middle; 
+ 
+	int *L = (int *)malloc(n1 * sizeof(int));
+	int *R = (int *)malloc(n2 * sizeof(int));
+ 
+	for (i = 0, k = start; i < n1; i++, k++)
+	{
+		L[i] = a[k];
+	}
+ 
+	for (i = 0, k = middle + 1; i < n2; i++, k++)
+	{
+		R[i] = a[k];
+	}
+ 
+	for (k = start, i = 0, j = 0; i < n1 && j < n2; k++)
+	{
+		if (L[i] < R[j])
+		{
+			a[k] = L[i];
+			i++;
+		}
+		else
+		{
+			a[k] = R[j];
+			j++;
+		}
+	}
+ 
+	if (i < n1)
+	{
+		for (j = i; j < n1; j++, k++)
+		{
+			a[k] = L[j];
+		}
+	}
+ 
+	if (j < n2)
+	{
+		for (i = j; i < n2; i++, k++)
+		{
+			a[k] = R[i];
+		}
+	}
+}
+
+void MSort(int a[],int start, int end){
+
+	int middle;
+	int i;
+	if (start < end)
+	{
+		middle = (start + end) / 2;
+		
+		MSort(a, start, middle);
+		MSort(a, middle + 1, end);
+		Merge(a,start,middle, end);
+	}
+
+}
+
+
+void MergeSort(int a[])
+{
+	MSort(a,1,LEN); 
+	printf("\n归并排序如下\n");  
+}
+
+//堆排序 
+
+void AdjustMinHeap(int *a, int pos, int len)
+{
+    int tmp, child;
+ 
+    for(tmp = a[pos]; 2 * pos + 1 <= len; pos = child)
+    {
+        child = 2 * pos + 1;
+        if(child < len && a[child] > a[child + 1])
+        {
+            child++;
+        }
+ 
+        if(a[child] < tmp)
+        {
+            a[pos] = a[child];
+        }
+ 
+        else
+        {
+            break;
+        }
+    }
+    a[pos] = tmp;
+}
+ 
+void Swap(int *a, int *b)
+{
+    int temp;
+    temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void HeapSort(int a[])		//这里实现的是大根堆 
+{
+	int i;
+ 
+    for(i = LEN/2 - 1; i >= 0; i--)
+    {
+        AdjustMinHeap(a, i, LEN - 1);
+    }
+ 
+    for(i = LEN - 1; i >= 0; i--)
+    {
+        Swap(&a[0], &a[i]);
+        AdjustMinHeap(a, 0, i - 1);
+    }
+
+}
+
+
+/*打印选项*/ 
+void Print_Choice()
+{
+	printf("\n功能：\n");
+	printf("\t1.冒泡排序\n");
+	printf("\t2.选择排序\n");
+	printf("\t3.插入排序\n");
+	printf("\t4.希尔排序\n");
+	printf("\t5.快速排序\n");	
+	printf("\t6.归并排序\n");
+	printf("\t7.堆排序\n");
+	printf("\t8.退出\n");
+	return;
+}
+
+int main()
+{
+	int a[LEN]; 
+	int ch=-1;
+	
+	while (1)
+	{
+		Print_Choice();
+		printf("请选择：");
+		scanf("%d",&ch);
+			    
+	    switch(ch)
+		{
+			case 1:
+				Init_Data(a,LEN); 
+				BubbleSort(a);
+				Print_Data(a,LEN);
+				break;
+			case 2:
+				Init_Data(a,LEN); 
+				SelectSort(a);
+				Print_Data(a,LEN);
+				break;	
+			case 3:
+				Init_Data(a,LEN); 
+				InsertSort(a);
+				Print_Data(a,LEN);   
+				
+				break;		
+			case 4:  
+				Init_Data(a,LEN); 
+				ShellSort(a);
+				Print_Data(a,LEN); 
+				
+				break;
+			case 5:
+				Init_Data(a,LEN); 
+				QuickSort(a);
+				Print_Data(a,LEN);
+				
+				break;			
+			case 6:
+				Init_Data(a,LEN); 
+				MergeSort(a);
+				Print_Data(a,LEN);
+				break;
+			case 7:
+				Init_Data(a,LEN); 
+				HeapSort(a);
+				Print_Data(a,LEN);
+				break;
+			case 8:
+				return 1;
+			default:
+			   printf("输入错误!请重新输入...");
+			   break;
+		}
+	}
+}
